@@ -3,9 +3,9 @@ import os
 import tensorflow as tf
 from matplotlib import pyplot as plt
 
-import detection_utils
 import plt_utils
-from detection_utils import *
+from detector.detection_utils import *
+from detector import detect_signs
 
 
 def put_annotation(image, position, prediction):
@@ -21,7 +21,7 @@ def put_annotation(image, position, prediction):
                 color=(0, 0, 0), thickness=1)
 
 
-plt_utils.setup(plt=plt, figsize=(9, 3), dpi=300)
+plt_utils.setup(plt=plt, figsize=(5, 3), dpi=300)
 
 # read all labels
 file = open('sign_labels.txt', "r")
@@ -31,54 +31,20 @@ for line in file:
 file.close()
 
 # setup model
-model = tf.keras.models.load_model('imported_model')
+model = tf.keras.models.load_model('imported_models/sign_recognition')
 
-samples = 'sample_frames/mixed'
+samples = 'sample_frames'
 
 for r, d, files in os.walk(samples):
     files = np.sort(files)
     for file in files:
-        if '74_35.jpg' in file:
+        if '.jpg' in file:
             path_img = os.path.join(samples, file)
             image_orig = cv2.imread(filename=path_img)
-            image_adjusted = equalize_luminance(image=image_orig)
-            # blur: 3x3 & 5x5 -> worse results, in specific at signs on top of each other, in that way that hough
-            # didnt detect the correct radius
-            # medianblur: 5 -> no good
-            # 3 -> sorgt dafür, dass mehr farben gefiltert werden.
-            image_adjusted = cv2.medianBlur(src=image_adjusted, ksize=3)
 
-            boxes = []
-
-            # YELLOW
-            mask_yellow = thresholded_to_zero(image=image_adjusted, threshold=120)
-            mask_yellow = filter_by_color(image=mask_yellow, color_ranges=[detection_utils.YELLOW])
-            mask_yellow = keep_blobs_of_area(image=mask_yellow, min_area=70, max_area=1000, min_ar=0.8, max_ar=1.2)
-            mask_yellow = concatenate_blobs(mask_yellow)
-            boxes = detect(image=mask_yellow, boxes=boxes, min_ar=0.8, max_ar=1.2, min_extent=0.5)
-
-            # RED
-            mask_red = filter_by_color(image=image_adjusted, color_ranges=[RED_A, RED_B])
-            mask_red = concatenate_blobs(image=mask_red)
-            mask_red = keep_blobs_of_area(image=mask_red, min_area=100, max_area=2000, min_ar=0.3, max_ar=1.3)
-
-            # detect
-            boxes = detect(image=mask_red, boxes=boxes, min_ar=0.8, max_ar=1.2, corners=3)
-            boxes = detect_circles(image=mask_red, boxes=boxes)
-            print(boxes)
-
-            # BLUE
-            mask_blue = filter_by_color(image=image_adjusted, color_ranges=[BLUE])
-            mask_blue = concatenate_blobs(image=mask_blue)
-            mask_blue = keep_blobs_of_area(image=mask_blue, min_area=100, max_area=2000, min_ar=0.8, max_ar=1.2)
-            boxes = detect_circles(image=mask_blue, boxes=boxes)
-
+            boxes = detect_signs(image_orig)
             # convert to RGB
             image_orig = cv2.cvtColor(src=image_orig, code=cv2.COLOR_BGR2RGB)
-
-            # clean-up boxes to remove false-positives
-            boxes = filter_boxes(boxes=boxes)
-            boxes = enlarge_boxes(boxes=boxes, expand_ratio=2)
 
             predictions = []
 
