@@ -21,7 +21,7 @@ def put_annotation(image, position, prediction):
                 color=(0, 0, 0), thickness=1)
 
 
-plt_utils.setup(plt=plt, figsize=(3, 2), dpi=600)
+plt_utils.setup(plt=plt, figsize=(9, 3), dpi=300)
 
 # read all labels
 file = open('sign_labels.txt', "r")
@@ -33,11 +33,13 @@ file.close()
 # setup model
 model = tf.keras.models.load_model('imported_model')
 
-for r, d, files in os.walk('sample_frames/mixed'):
+samples = 'sample_frames/mixed'
+
+for r, d, files in os.walk(samples):
     files = np.sort(files)
     for file in files:
-        if '.jpg' in file:
-            path_img = os.path.join('sample_frames/mixed', file)
+        if '74_35.jpg' in file:
+            path_img = os.path.join(samples, file)
             image_orig = cv2.imread(filename=path_img)
             image_adjusted = equalize_luminance(image=image_orig)
             # blur: 3x3 & 5x5 -> worse results, in specific at signs on top of each other, in that way that hough
@@ -59,11 +61,16 @@ for r, d, files in os.walk('sample_frames/mixed'):
             mask_red = filter_by_color(image=image_adjusted, color_ranges=[RED_A, RED_B])
             mask_red = concatenate_blobs(image=mask_red)
             mask_red = keep_blobs_of_area(image=mask_red, min_area=100, max_area=2000, min_ar=0.3, max_ar=1.3)
+
+            # detect
             boxes = detect(image=mask_red, boxes=boxes, min_ar=0.8, max_ar=1.2, corners=3)
             boxes = detect_circles(image=mask_red, boxes=boxes)
+            print(boxes)
 
             # BLUE
             mask_blue = filter_by_color(image=image_adjusted, color_ranges=[BLUE])
+            mask_blue = concatenate_blobs(image=mask_blue)
+            mask_blue = keep_blobs_of_area(image=mask_blue, min_area=100, max_area=2000, min_ar=0.8, max_ar=1.2)
             boxes = detect_circles(image=mask_blue, boxes=boxes)
 
             # convert to RGB
@@ -99,7 +106,7 @@ for r, d, files in os.walk('sample_frames/mixed'):
             for prediction, box in zip(predictions, boxes):
                 if prediction[1] > 0.95:
                     cv2.rectangle(img=image_orig, pt1=(box[0], box[1]), pt2=(box[0] + box[2], (box[1] + box[3])),
-                                  color=(0, 255, 0), thickness=1)
+                                  color=(0, 255, 0), thickness=2)
                     put_annotation(image_orig, (box[0], box[1]), prediction)
 
             plt_utils.show(plt, image=image_orig, title='Detected Areas')
