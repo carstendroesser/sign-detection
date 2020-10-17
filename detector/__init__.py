@@ -20,7 +20,7 @@ def detect_signs(image_orig):
     # RED
     mask_red = filter_by_color(image=image_adjusted, color_ranges=[RED_A, RED_B])
     mask_red = concatenate_blobs(image=mask_red)
-    mask_red = keep_blobs_of_area(image=mask_red, min_area=100, max_area=2000, min_ar=0.3, max_ar=1.3)
+    mask_red = keep_blobs_of_area(image=mask_red, min_area=100, max_area=4000, min_ar=0.3, max_ar=1.3)
 
     # detect
     boxes = detect(image=mask_red, boxes=boxes, min_ar=0.8, max_ar=1.2, corners=3)
@@ -29,7 +29,7 @@ def detect_signs(image_orig):
     # BLUE
     mask_blue = filter_by_color(image=image_adjusted, color_ranges=[BLUE])
     mask_blue = concatenate_blobs(image=mask_blue)
-    mask_blue = keep_blobs_of_area(image=mask_blue, min_area=100, max_area=2000, min_ar=0.8, max_ar=1.2)
+    mask_blue = keep_blobs_of_area(image=mask_blue, min_area=100, max_area=4000, min_ar=0.8, max_ar=1.2)
     boxes = detect_circles(image=mask_blue, boxes=boxes)
 
     # clean-up boxes to remove false-positives
