@@ -4,8 +4,8 @@ import tensorflow as tf
 from matplotlib import pyplot as plt
 
 import plt_utils
-from detector.detection_utils import *
 from detector import detect_signs
+from detector.detection_utils import *
 
 
 def put_annotation(image, position, prediction):
@@ -75,4 +75,4 @@ for r, d, files in os.walk(samples):
                                   color=(0, 255, 0), thickness=2)
                     put_annotation(image_orig, (box[0], box[1]), prediction)
 
-            plt_utils.show(plt, image=image_orig, title='Detected Areas')
+            plt_utils.show(plt, image=image_orig, title='')
